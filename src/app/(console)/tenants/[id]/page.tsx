@@ -32,12 +32,13 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
     throw error;
   }
 
-  const [plans, packs, meterState] = await Promise.all([
+  const [plans, packs, meterState, overview] = await Promise.all([
     apiFetchSafe<Plan[]>('/platform/plans'),
     apiFetchSafe<CreditPack[]>('/platform/packs', { query: { activeOnly: 'true' } }),
     apiFetchSafe<{ usage: UsageSummary; limits: LimitsSummary; history: CreditEntry[] }>(
       `/platform/tenants/${id}/usage`,
     ),
+    apiFetchSafe<TenantOverview>(`/platform/tenants/${id}/overview`),
   ]);
   const subscription = tenant.subscriptions?.[0] ?? null;
 
@@ -97,13 +98,64 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             <div className="!mt-4 flex items-center gap-2 rounded-lg bg-stone-50 p-3">
               <Building2 className="h-4 w-4 shrink-0 text-ink-subtle" />
               <p className="text-2xs leading-relaxed text-ink-muted">
-                Suspending a salon takes effect immediately — staff are signed out on their next request, and the API
-                refuses their tokens.
+                Switching a salon off takes effect immediately, and makes their account read-only rather than locking
+                them out: every record stays readable and exportable, and nothing new can be saved — no bookings, no
+                bills, no messages.
               </p>
             </div>
           </CardBody>
         </Card>
       </div>
+
+      {overview ? (
+        <Card className="mt-5">
+          <CardHeader
+            title="How they are using it"
+            subtitle="Last 30 days. Aggregate only — no customer records are shown here."
+          />
+          <CardBody>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              <Figure label="Appointments" value={count(overview.activity.appointments30)} />
+              <Figure label="Bills raised" value={count(overview.activity.invoices30)} />
+              <Figure label="Revenue billed" value={money(overview.activity.revenue30)} />
+              <Figure label="Active staff" value={count(overview.activity.staff)} />
+            </div>
+
+            <div className="mt-4 grid gap-2.5 border-t border-stone-100 pt-4 sm:grid-cols-3">
+              <Row label="Last booking" value={overview.activity.lastAppointmentAt ? date(overview.activity.lastAppointmentAt) : 'never'} />
+              <Row label="Last bill" value={overview.activity.lastInvoiceAt ? date(overview.activity.lastInvoiceAt) : 'never'} />
+              <Row
+                label="Last signed in"
+                value={
+                  overview.activity.lastLoginAt
+                    ? `${date(overview.activity.lastLoginAt)}${overview.activity.lastLoginBy ? ` · ${overview.activity.lastLoginBy.name}` : ''}`
+                    : 'never'
+                }
+              />
+            </div>
+
+            {overview.branches.length > 0 ? (
+              <div className="mt-4 border-t border-stone-100 pt-4">
+                <p className="mb-2 text-2xs font-medium uppercase tracking-wide text-ink-subtle">Branches</p>
+                <ul className="space-y-1.5">
+                  {overview.branches.map((branch) => (
+                    <li key={branch.id} className="flex items-center justify-between gap-3 text-xs">
+                      <span className="text-ink">
+                        {branch.name}
+                        {branch.city ? <span className="text-ink-subtle"> · {branch.city}</span> : null}
+                        {branch.isActive ? null : <span className="ml-1.5 text-ink-subtle">(closed)</span>}
+                      </span>
+                      <span className="tnum shrink-0 text-ink-muted">
+                        {branch._count.staff} staff · {count(branch._count.appointments)} bookings
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
+          </CardBody>
+        </Card>
+      ) : null}
 
       <TenantUsage
         tenantId={tenant.id}
@@ -159,6 +211,29 @@ function Row({ label, value, mono }: { label: string; value?: string | null; mon
     <div className="flex items-start justify-between gap-4 border-b border-stone-100 pb-2 last:border-b-0">
       <span className="text-xs text-ink-muted">{label}</span>
       <span className={`text-right text-sm text-ink ${mono ? 'font-mono text-xs' : ''}`}>{value || '—'}</span>
+    </div>
+  );
+}
+
+interface TenantOverview {
+  branches: { id: string; name: string; city: string | null; isActive: boolean; _count: { staff: number; appointments: number } }[];
+  activity: {
+    staff: number;
+    appointments30: number;
+    invoices30: number;
+    revenue30: number | string;
+    lastAppointmentAt: string | null;
+    lastInvoiceAt: string | null;
+    lastLoginAt: string | null;
+    lastLoginBy: { name: string; role: string } | null;
+  };
+}
+
+function Figure({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-stone-50 p-3">
+      <p className="tnum text-lg font-semibold text-ink">{value}</p>
+      <p className="text-2xs text-ink-muted">{label}</p>
     </div>
   );
 }

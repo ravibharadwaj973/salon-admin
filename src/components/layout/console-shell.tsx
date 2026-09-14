@@ -2,12 +2,13 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, LayoutDashboard, LogOut, Package, ShieldCheck, Wallet } from 'lucide-react';
+import { Building2, CalendarClock, LayoutDashboard, LogOut, Package, ShieldCheck, Wallet } from 'lucide-react';
 import { cn } from '@/lib/cn';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard, exact: true },
   { href: '/tenants', label: 'Salons', icon: Building2 },
+  { href: '/renewals', label: 'Renewals', icon: CalendarClock },
   { href: '/plans', label: 'Plans', icon: Package },
   { href: '/packs', label: 'Add-ons', icon: Wallet },
 ];
