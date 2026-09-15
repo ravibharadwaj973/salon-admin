@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { ShieldCheck } from 'lucide-react';
+import { ParlonMark } from '@/components/brand/parlon-logo';
 import { LoginForm } from './login-form';
 
 export const metadata: Metadata = { title: 'Operator sign in' };
@@ -10,9 +10,9 @@ export default function PlatformLoginPage() {
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
           <span className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-white/10">
-            <ShieldCheck className="h-5 w-5 text-white" />
+            <ParlonMark className="h-6 w-6 text-white" />
           </span>
-          <h1 className="text-lg font-semibold tracking-tight text-white">Salon OS Platform</h1>
+          <h1 className="text-lg font-semibold tracking-tight text-white">Parlon Platform</h1>
           <p className="mt-1 text-xs text-stone-400">Operator console — not for salon staff.</p>
         </div>
 

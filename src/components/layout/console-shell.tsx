@@ -2,11 +2,15 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, CalendarClock, LayoutDashboard, LogOut, Package, ShieldCheck, Wallet } from 'lucide-react';
+import { Building2, CalendarClock, Inbox, LayoutDashboard, LogOut, Package, Wallet } from 'lucide-react';
+import { ParlonLogo, ParlonMark } from '@/components/brand/parlon-logo';
 import { cn } from '@/lib/cn';
 
 const NAV = [
   { href: '/', label: 'Overview', icon: LayoutDashboard, exact: true },
+  // Enquiries sit above Salons because that is the order things happen in: a
+  // salon on this platform was an enquiry first, always.
+  { href: '/enquiries', label: 'Enquiries', icon: Inbox },
   { href: '/tenants', label: 'Salons', icon: Building2 },
   { href: '/renewals', label: 'Renewals', icon: CalendarClock },
   { href: '/plans', label: 'Plans', icon: Package },
@@ -34,7 +38,7 @@ export function ConsoleShell({ children, operator }: { children: React.ReactNode
           inside a salon's own app. */}
       <aside className="fixed inset-y-0 left-0 hidden w-56 flex-col bg-stone-900 lg:flex">
         <div className="flex h-14 items-center gap-2 border-b border-white/10 px-4">
-          <ShieldCheck className="h-4 w-4 text-white" />
+          <ParlonMark className="h-5 w-5 text-white" />
           <span className="text-sm font-semibold tracking-tight text-white">Platform</span>
         </div>
 
@@ -81,8 +85,8 @@ export function ConsoleShell({ children, operator }: { children: React.ReactNode
 
       <div className="flex min-w-0 flex-1 flex-col lg:pl-56">
         <header className="flex h-14 items-center gap-3 border-b border-stone-200 bg-white px-4 lg:hidden">
-          <ShieldCheck className="h-4 w-4 text-ink" />
-          <span className="text-sm font-semibold text-ink">Salon OS Platform</span>
+          <ParlonLogo className="h-6 w-6" />
+          <span className="text-sm font-semibold text-ink">Parlon Platform</span>
           <nav className="ml-auto flex gap-1">
             {NAV.map((item) => (
               <Link

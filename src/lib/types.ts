@@ -1,4 +1,4 @@
-/** Shapes the platform console reads from the Salon OS API. */
+/** Shapes the platform console reads from the Parlon API. */
 
 export interface Envelope<T> {
   success: true;
@@ -195,6 +195,56 @@ export interface PlatformStats {
   branches: number;
   customers: number;
   grossTransactionValue: Money;
+  enquiries?: EnquiryStats;
+}
+
+// ------------------------------------------------------------- enquiries --
+
+/**
+ * Where an enquiry has got to. It is a pipeline, not a state machine — an
+ * operator can put one back to CONTACTED after a demo that went nowhere, and
+ * nothing in the app stops them.
+ */
+export type EnquiryStatus = 'NEW' | 'CONTACTED' | 'DEMO_BOOKED' | 'TRIAL_STARTED' | 'WON' | 'LOST';
+
+export const ENQUIRY_STAGES: { status: EnquiryStatus; label: string; blurb: string }[] = [
+  { status: 'NEW', label: 'New', blurb: 'Came in, nobody has rung them' },
+  { status: 'CONTACTED', label: 'Contacted', blurb: 'You have spoken to them' },
+  { status: 'DEMO_BOOKED', label: 'Demo booked', blurb: 'A walkthrough is in the diary' },
+  { status: 'TRIAL_STARTED', label: 'Trialling', blurb: 'Using it on their own data' },
+  { status: 'WON', label: 'Won', blurb: 'They are a salon on the platform' },
+  { status: 'LOST', label: 'Lost', blurb: 'Not going anywhere' },
+];
+
+export interface Enquiry {
+  id: string;
+  salonName: string;
+  contactName: string;
+  email: string;
+  phone: string;
+  city: string | null;
+  size: string | null;
+  message: string | null;
+  status: EnquiryStatus;
+  source: string | null;
+  notes: string | null;
+  contactedAt: string | null;
+  convertedTenantId: string | null;
+  convertedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface EnquiryList {
+  items: Enquiry[];
+  total: number;
+  counts: Partial<Record<EnquiryStatus, number>>;
+}
+
+export interface EnquiryStats {
+  open: number;
+  newThisWeek: number;
+  wonThisMonth: number;
 }
 
 export interface ProvisionResult {

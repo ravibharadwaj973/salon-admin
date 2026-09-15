@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Building2, Plus, Users } from 'lucide-react';
+import { Building2, Inbox, Plus, Users } from 'lucide-react';
 import { apiFetchList, apiFetchSafe } from '@/lib/api';
 import { Badge, Card, CardHeader, EmptyState, PageHeader, StatTile, StatusBadge } from '@/components/ui/display';
 import { ButtonLink } from '@/components/ui/button';
@@ -31,6 +31,25 @@ export default async function OverviewPage() {
           </ButtonLink>
         }
       />
+
+      {/* Unanswered enquiries go above the platform numbers, because they are
+          the only thing on this page that is costing money right now. */}
+      {stats?.enquiries && stats.enquiries.open > 0 ? (
+        <Link
+          href="/enquiries?status=NEW"
+          className="mb-3 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 transition-colors hover:border-amber-300"
+        >
+          <Inbox className="h-4 w-4 shrink-0 text-amber-700" />
+          <p className="text-sm text-amber-900">
+            <strong className="font-semibold">
+              {stats.enquiries.open} {stats.enquiries.open === 1 ? 'salon is' : 'salons are'}
+            </strong>{' '}
+            waiting to hear back from you
+            {stats.enquiries.newThisWeek > 0 ? ` — ${stats.enquiries.newThisWeek} came in this week` : ''}.
+          </p>
+          <span className="ml-auto shrink-0 text-xs font-medium text-amber-800">Open enquiries →</span>
+        </Link>
+      ) : null}
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <StatTile label="Salons" value={count(stats?.tenants ?? 0)} hint={`${byStatus.ACTIVE ?? 0} active`} />

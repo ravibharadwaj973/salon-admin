@@ -10,7 +10,7 @@ import { Checkbox, Field, Input, Select } from '@/components/ui/form';
 import { useToast } from '@/components/ui/overlay';
 import { money } from '@/lib/format';
 import { FAIR_USE_UNLIMITED } from '@/lib/types';
-import type { Plan, ProvisionResult } from '@/lib/types';
+import type { Enquiry, Plan, ProvisionResult } from '@/lib/types';
 
 /** A quiet, sensible starting password the operator can read out over the phone. */
 function suggestPassword(): string {
@@ -74,7 +74,13 @@ const EMPTY: FormState = {
   seedDefaults: true,
 };
 
-export function ProvisionForm({ plans }: { plans: Plan[] }) {
+/**
+ * When this form is opened from an enquiry, everything the salon typed on the
+ * website is already in the boxes — the operator is correcting a form, not
+ * transcribing a phone call. Submitting then goes through the convert route, so
+ * the enquiry is marked won and linked to the salon in the same breath.
+ */
+export function ProvisionForm({ plans, enquiry = null }: { plans: Plan[]; enquiry?: Enquiry | null }) {
   const router = useRouter();
   const toast = useToast();
 
@@ -84,6 +90,17 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
 
   const [form, setForm] = useState<FormState>({
     ...EMPTY,
+    ...(enquiry
+      ? {
+          name: enquiry.salonName,
+          phone: enquiry.phone,
+          email: enquiry.email,
+          city: enquiry.city ?? '',
+          ownerName: enquiry.contactName,
+          ownerEmail: enquiry.email,
+          ownerPhone: enquiry.phone,
+        }
+      : {}),
     planCode: pilot?.code ?? '',
     ownerPassword: suggestPassword(),
   });
@@ -105,31 +122,34 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
     setBusy(true);
 
     try {
-      const created = await apiPost<ProvisionResult>('platform/tenants', {
-        name: form.name,
-        slug: slug || undefined,
-        legalName: form.legalName || undefined,
-        gstin: form.gstin || undefined,
-        phone: form.phone,
-        email: form.email,
-        addressLine: form.addressLine || undefined,
-        city: form.city || undefined,
-        state: form.state || undefined,
-        stateCode: form.stateCode || undefined,
-        pincode: form.pincode || undefined,
-        currency: 'INR',
-        timezone: 'Asia/Kolkata',
-        planCode: form.planCode || undefined,
-        trialDays: form.trialDays,
-        owner: {
-          name: form.ownerName,
-          email: form.ownerEmail,
-          phone: form.ownerPhone || undefined,
-          password: form.ownerPassword,
+      const created = await apiPost<ProvisionResult>(
+        enquiry ? `platform/enquiries/${enquiry.id}/convert` : 'platform/tenants',
+        {
+          name: form.name,
+          slug: slug || undefined,
+          legalName: form.legalName || undefined,
+          gstin: form.gstin || undefined,
+          phone: form.phone,
+          email: form.email,
+          addressLine: form.addressLine || undefined,
+          city: form.city || undefined,
+          state: form.state || undefined,
+          stateCode: form.stateCode || undefined,
+          pincode: form.pincode || undefined,
+          currency: 'INR',
+          timezone: 'Asia/Kolkata',
+          planCode: form.planCode || undefined,
+          trialDays: form.trialDays,
+          owner: {
+            name: form.ownerName,
+            email: form.ownerEmail,
+            phone: form.ownerPhone || undefined,
+            password: form.ownerPassword,
+          },
+          branch: { name: form.branchName, code: form.branchCode.toUpperCase() },
+          seedDefaults: form.seedDefaults,
         },
-        branch: { name: form.branchName, code: form.branchCode.toUpperCase() },
-        seedDefaults: form.seedDefaults,
-      });
+      );
 
       setResult(created);
       toast.success(`${created.tenant.name} is live`);
@@ -151,7 +171,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
   }
 
   if (result) {
-    return <Handover result={result} password={form.ownerPassword} />;
+    return <Handover result={result} password={form.ownerPassword} enquiry={enquiry} />;
   }
 
   return (
@@ -165,7 +185,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
                 id={id}
                 value={form.name}
                 onChange={(e) => set('name', e.target.value)}
-                placeholder="Glow Studio"
+                placeholder="The salon's name"
                 required
                 autoFocus
               />
@@ -190,7 +210,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
                     setSlugTouched(true);
                     set('slug', slugify(e.target.value));
                   }}
-                  placeholder="glow-studio"
+                  placeholder="the-salon"
                   className="rounded-l-none font-mono text-xs"
                 />
               </div>
@@ -203,7 +223,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
                 id={id}
                 value={form.legalName}
                 onChange={(e) => set('legalName', e.target.value)}
-                placeholder="Glow Studio Pvt Ltd"
+                placeholder="Their registered company name"
               />
             )}
           </Field>
@@ -241,7 +261,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
                 type="email"
                 value={form.email}
                 onChange={(e) => set('email', e.target.value)}
-                placeholder="hello@glowstudio.in"
+                placeholder="hello@theirsalon.in"
                 required
               />
             )}
@@ -316,7 +336,7 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
                 type="email"
                 value={form.ownerEmail}
                 onChange={(e) => set('ownerEmail', e.target.value)}
-                placeholder="priya@glowstudio.in"
+                placeholder="owner@theirsalon.in"
                 required
               />
             )}
@@ -447,7 +467,15 @@ export function ProvisionForm({ plans }: { plans: Plan[] }) {
 }
 
 /** What the operator reads out to the salon owner once provisioning succeeds. */
-function Handover({ result, password }: { result: ProvisionResult; password: string }) {
+function Handover({
+  result,
+  password,
+  enquiry,
+}: {
+  result: ProvisionResult;
+  password: string;
+  enquiry?: Enquiry | null;
+}) {
   const toast = useToast();
 
   const lines = [
@@ -467,6 +495,7 @@ function Handover({ result, password }: { result: ProvisionResult; password: str
             <p className="text-xs text-ink-muted">
               Tenant, {result.branch.name} and the owner account were created together. Hand these details over — the
               password is not shown again.
+              {enquiry ? ' Their enquiry is marked won and now points at this salon.' : ''}
             </p>
           </div>
         </div>
@@ -494,9 +523,15 @@ function Handover({ result, password }: { result: ProvisionResult; password: str
             Copy handover details
           </Button>
           <ButtonLink href={`/tenants/${result.tenant.id}`}>Open the salon</ButtonLink>
-          <ButtonLink href="/tenants/new" variant="ghost">
-            Onboard another
-          </ButtonLink>
+          {enquiry ? (
+            <ButtonLink href="/enquiries" variant="ghost">
+              Back to enquiries
+            </ButtonLink>
+          ) : (
+            <ButtonLink href="/tenants/new" variant="ghost">
+              Onboard another
+            </ButtonLink>
+          )}
         </div>
       </CardBody>
     </Card>

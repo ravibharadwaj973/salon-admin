@@ -3,8 +3,10 @@ import './globals.css';
 import { Providers } from './providers';
 
 export const metadata: Metadata = {
-  title: { default: 'Salon OS Platform', template: '%s · Salon OS Platform' },
-  description: 'Operator console for the Salon OS platform.',
+  title: { default: 'Parlon Platform', template: '%s · Parlon Platform' },
+  description: 'Operator console for the Parlon platform.',
+  applicationName: 'Parlon Platform',
+  appleWebApp: { capable: true, title: 'Parlon Platform', statusBarStyle: 'black-translucent' },
   robots: { index: false, follow: false },
 };
 
