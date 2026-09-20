@@ -2,7 +2,22 @@ import 'server-only';
 import { getPlatformToken } from './session';
 import type { ApiErrorBody, Envelope, PageMeta } from './types';
 
-export const API_URL = process.env.API_URL ?? 'https://api.jharavi.in/api/v1';
+/**
+ * Accepts either name, because Next.js treats NEXT_PUBLIC_* and plain server
+ * variables as different things and it is easy to set one and not the other.
+ * A localhost value in a production build throws here rather than timing out
+ * as an unexplained 503 in somebody's browser.
+ */
+export const API_URL = (() => {
+  const value = (process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.jharavi.in/api/v1').replace(
+    /\/+$/,
+    '',
+  );
+  if (process.env.NODE_ENV === 'production' && /localhost|127\.0\.0\.1/.test(value)) {
+    throw new Error(`API_URL is ${value} in a production build — nothing on the internet can reach that.`);
+  }
+  return value;
+})();
 
 export class ApiError extends Error {
   constructor(
