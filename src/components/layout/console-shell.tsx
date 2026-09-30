@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Building2, CalendarClock, Inbox, LayoutDashboard, LogOut, Package, Wallet } from 'lucide-react';
+import { Building2, CalendarClock, Inbox, KeyRound, LayoutDashboard, LogOut, Package, Wallet } from 'lucide-react';
 import { ParlonLogo, ParlonMark } from '@/components/brand/parlon-logo';
 import { cn } from '@/lib/cn';
 
@@ -13,6 +13,12 @@ const NAV = [
   { href: '/enquiries', label: 'Enquiries', icon: Inbox },
   { href: '/tenants', label: 'Salons', icon: Building2 },
   { href: '/renewals', label: 'Renewals', icon: CalendarClock },
+  /**
+   * Above the billing pages because it is the only item here where somebody is
+   * blocked and waiting. A salon owner who cannot sign in cannot take a booking,
+   * ring up a sale or open their own diary; renewals and plans keep.
+   */
+  { href: '/password-resets', label: 'Password resets', icon: KeyRound },
   { href: '/plans', label: 'Plans', icon: Package },
   { href: '/packs', label: 'Add-ons', icon: Wallet },
 ];
